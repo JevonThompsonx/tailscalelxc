@@ -1,171 +1,116 @@
-# How to Configure Skip List
+# Skip List Configuration
+
+> How to exclude specific LXCs from the fix
+
+---
 
 ## Quick Setup
 
-If you have LXCs with Tailscale that you want to **exclude** from the mass-fix script (like disabled AdGuard), edit the script:
+Edit `tailscale-mass-fix.sh`:
 
 ```bash
 nano tailscale-mass-fix.sh
 ```
 
-Find this section at the top:
+Find this section:
 
 ```bash
-#############################################
-# CONFIGURATION
-#############################################
-
-# LXCs to skip (space-separated list of CTIDs)
-# Example: SKIP_LXCS="105 225 229"
+# LXCs to skip (space-separated list)
 SKIP_LXCS=""
 ```
 
-Change it to include your CTIDs:
+Add your LXC IDs:
 
 ```bash
 SKIP_LXCS="105 225 229"
 ```
 
-Save and exit (Ctrl+X, Y, Enter).
+Save and exit.
 
 ---
 
-## Your Specific Case
+## When to Use
 
-Based on your output, you have 3 LXCs with disabled or unwanted Tailscale:
+**Add to skip list when:**
+- Tailscale is intentionally disabled (e.g., DNS server)
+- Testing specific LXCs first
+- LXC has custom Tailscale config
 
-| CTID | Name | Status | What You Did |
-|------|------|--------|--------------|
-| 105 | adguardMainNetDns | Disabled | `systemctl disable tailscaled` |
-| 225 | uptimekuma | No IP | (Not disabled yet) |
-| 229 | adguard | No IP | (Not disabled yet) |
+**Don't need to add when:**
+- Service is disabled (auto-skipped)
+- Tailscale not installed (auto-skipped)
+- Already fixed (auto-skipped)
 
-### Recommended Configuration
+---
 
-Since you disabled Tailscale on adguardMainNetDns and want to skip it:
+## Example Scenarios
+
+### Scenario 1: Disabled AdGuard DNS
 
 ```bash
+# LXC 105 is your main DNS - Tailscale disabled
 SKIP_LXCS="105"
 ```
 
-Or if you want to skip all three:
+### Scenario 2: Multiple Test LXCs
 
 ```bash
+# Fix everything except test environments
+SKIP_LXCS="200 201 202"
+```
+
+### Scenario 3: Fix Specific LXCs Only
+
+Edit script directly:
+
+```bash
+# Around line 60, change:
+RUNNING_LXCS=$(pct list | awk 'NR>1 && $2=="running" {print $1}')
+
+# To:
+RUNNING_LXCS="101 102 103"  # Only these LXCs
+```
+
+---
+
+## What Gets Skipped
+
+The script automatically skips:
+
+1. **In SKIP_LXCS** → Shows "In skip list"
+2. **No Tailscale** → Shows "Tailscale not installed"
+3. **Service disabled** → Shows "tailscaled is disabled"
+4. **Already fixed** → Shows "Already has override"
+
+---
+
+## Verification
+
+After configuring, verify:
+
+```bash
+./tailscale-verify.sh
+```
+
+Skipped LXCs show:
+- Disabled services: `✗ Disabled` (gray)
+- Others: Not listed or marked as skipped
+
+---
+
+## Quick Reference
+
+```bash
+# Skip one LXC
+SKIP_LXCS="105"
+
+# Skip multiple LXCs
 SKIP_LXCS="105 225 229"
+
+# Skip nothing (default)
+SKIP_LXCS=""
 ```
 
 ---
 
-## How It Works
-
-The script will:
-1. Check each running LXC
-2. If CTID is in SKIP_LXCS → Skip it (shows as "In skip list")
-3. If Tailscale is not installed → Skip it
-4. If tailscaled is disabled → Skip it (automatic)
-5. If already has override → Skip it
-6. Otherwise → Apply the fix
-
----
-
-## Updated Scripts
-
-I've updated the scripts to:
-
-### ✅ tailscale-verify.sh
-- Shows disabled Tailscale services in gray
-- Clearly marks them as "✗ Disabled"
-- Won't show "No IP" for disabled services anymore
-
-### ✅ tailscale-mass-fix.sh
-- Has SKIP_LXCS configuration at the top
-- Automatically skips disabled services
-- Shows which LXCs are being skipped and why
-
-### ✅ fix-no-ip-lxcs.sh
-- Auto-detects LXCs with "No IP"
-- Skips disabled services automatically
-- Less intrusive prompts
-
----
-
-## Example Output After Configuration
-
-With `SKIP_LXCS="105 225 229"` configured:
-
-```
-=== Tailscale Mass Fix for Proxmox LXCs ===
-Starting at Sun Feb  8 13:30:00 PST 2026
-Skip list: 105 225 229
-
-Found 26 running LXCs
-
-[1/26] ─────────────────────────────────────
-Checking LXC 105 (adguardMainNetDns)...
-  ↪ Skipping: In skip list (SKIP_LXCS)
-
-[2/26] ─────────────────────────────────────
-Checking LXC 109 (jellyfin)...
-  ✓ Tailscale detected and enabled
-  → Applying fix...
-  ✓ Fix applied and tailscaled restarted
-  ✓ Tailscale IP: 100.70.231.28
-
-... (continues for other LXCs) ...
-```
-
-And `tailscale-verify.sh` will show:
-
-```
-CTID   NAME                 TAILSCALE  IP ADDRESS         OVERRIDE STATUS
-────────────────────────────────────────────────────────────────────────────────
-105    adguardMainNetDns    Disabled   -                  No       ✗ Disabled
-109    jellyfin             Yes        100.70.231.28      Yes      ✓ OK
-```
-
----
-
-## Default Behavior
-
-**If you don't configure SKIP_LXCS:**
-- Script automatically skips disabled services
-- LXC 105 will be skipped because you disabled tailscaled
-- LXCs 225 and 229 will be processed if tailscaled is enabled
-
-**The updated script already skips disabled services**, so you technically don't need to add them to SKIP_LXCS. But adding them makes it explicit and shows in the output "In skip list".
-
----
-
-## Quick Commands
-
-```bash
-# On pveBig
-
-# Upload the updated scripts (already done via earlier uploads)
-
-# Configure skip list (optional - disabled services are auto-skipped)
-nano tailscale-mass-fix.sh
-# Edit SKIP_LXCS line, save
-
-# Run verification
-./tailscale-verify.sh
-
-# Run mass fix
-./tailscale-mass-fix.sh
-
-# Verify results
-./tailscale-verify.sh
-```
-
----
-
-## Recommendation
-
-Based on what you've shown:
-
-1. **Keep LXC 105 disabled** - You don't want Tailscale on your main DNS
-2. **Either disable or authenticate 225 & 229**:
-   - To disable: `pct exec 225 -- systemctl disable tailscaled && systemctl stop tailscaled`
-   - To authenticate: Use the fix-no-ip-lxcs.sh script
-
-3. **Run the mass-fix** - It will automatically skip disabled ones and fix the rest
+**Note:** Disabled services are auto-skipped. Adding them to SKIP_LXCS just makes it explicit in the output.

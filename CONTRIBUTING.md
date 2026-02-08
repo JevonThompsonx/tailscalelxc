@@ -1,145 +1,152 @@
-# Contributing to Proxmox Tailscale Fix
+# Contributing
 
-First off, thank you for considering contributing! This project was born from real-world Proxmox administration, and community input makes it better for everyone.
+> Thanks for considering contributing! 🎉
 
-## How Can I Contribute?
+---
 
-### 🐛 Reporting Bugs
+## 🐛 Report a Bug
 
-Before creating bug reports, please check existing issues to avoid duplicates. When creating a bug report, include:
+1. Check [existing issues](../../issues) first
+2. Use the [bug report template](../../issues/new?template=bug_report.md)
+3. Include:
+   - Proxmox version (`pveversion`)
+   - LXC OS (Debian/Ubuntu version)
+   - Tailscale version
+   - Output from `./tailscale-verify.sh`
+   - Log excerpts from `/var/log/tailscale-mass-fix.log`
 
-- **Proxmox VE version** (`pveversion`)
-- **LXC OS and version** (Debian/Ubuntu version)
-- **Tailscale version** (`tailscale version`)
-- **Output from** `./tailscale-verify.sh`
-- **Relevant log excerpts** from `/var/log/tailscale-mass-fix.log`
-- **Steps to reproduce** the issue
-- **Expected vs actual behavior**
+---
 
-### 💡 Suggesting Enhancements
+## 💡 Suggest a Feature
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, include:
+1. Open a [new issue](../../issues/new)
+2. Describe the feature
+3. Explain the use case
+4. (Optional) Propose implementation
 
-- **Clear description** of the feature
-- **Use case** - why would this be useful?
-- **Proposed solution** (if you have one)
-- **Alternatives considered**
+---
 
-### 🔧 Pull Requests
+## 🔧 Submit Code
 
-1. **Fork the repository** and create your branch from `main`
-2. **Test your changes** on a real Proxmox environment if possible
-3. **Update documentation** if you're changing functionality
-4. **Follow the existing code style** (bash best practices)
-5. **Write clear commit messages**
+### Quick Start
 
-#### Testing Checklist
+```bash
+# Fork the repo
+git clone https://github.com/yourusername/proxmox-tailscale-fix.git
+cd proxmox-tailscale-fix
 
-Before submitting a PR, test on:
-- [ ] Proxmox VE (latest stable version)
-- [ ] At least one Debian-based LXC
-- [ ] LXCs with Tailscale enabled
-- [ ] LXCs with Tailscale disabled (should be skipped)
-- [ ] LXCs without Tailscale (should be skipped)
-- [ ] Verify the fix persists after LXC reboot
+# Create branch
+git checkout -b feature/my-feature
 
-### 📝 Code Style
+# Make changes
+nano tailscale-mass-fix.sh
 
-- Use `bash` shebang: `#!/usr/bin/env bash`
-- Use `set -euo pipefail` for error handling
-- Comment complex logic
-- Use descriptive variable names
-- Include error messages for failure cases
-- Use colorized output for user-facing messages
+# Test thoroughly
+./tailscale-verify.sh
+./tailscale-mass-fix.sh
 
-### 🎨 Commit Messages
+# Commit
+git commit -m "Add my feature"
 
-- Use present tense ("Add feature" not "Added feature")
-- Use imperative mood ("Move cursor to..." not "Moves cursor to...")
-- Limit first line to 72 characters
-- Reference issues and PRs liberally
+# Push
+git push origin feature/my-feature
 
-Example:
+# Open Pull Request on GitHub
+```
+
+### Testing Checklist
+
+Test on real Proxmox before submitting:
+
+- [ ] Works with Tailscale-enabled LXCs
+- [ ] Skips disabled Tailscale services
+- [ ] Skips LXCs without Tailscale
+- [ ] Fix persists after LXC reboot
+- [ ] No errors in log file
+- [ ] Colorized output works
+
+---
+
+## 📝 Code Style
+
+**Bash Best Practices:**
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Use descriptive names
+RUNNING_LXCS="101 102"
+
+# Comment complex logic
+# Check if Tailscale is enabled
+if systemctl is-enabled tailscaled; then
+    ...
+fi
+
+# Colorize user output
+log "Success!" "$GREEN"
+```
+
+---
+
+## 💬 Commit Messages
+
+**Format:**
+
 ```
 Add support for Alpine Linux LXCs
 
 - Detect Alpine package manager
-- Adjust systemd paths for Alpine
-- Update documentation
+- Adjust paths for Alpine
+- Update docs
 
 Fixes #123
 ```
 
-## Development Setup
-
-```bash
-# Clone your fork
-git clone https://github.com/yourusername/proxmox-tailscale-fix.git
-cd proxmox-tailscale-fix
-
-# Make your changes
-nano tailscale-mass-fix.sh
-
-# Test on Proxmox host
-./tailscale-verify.sh
-./tailscale-mass-fix.sh
-
-# Create a branch
-git checkout -b feature/my-new-feature
-
-# Commit your changes
-git add .
-git commit -m "Add my new feature"
-
-# Push to your fork
-git push origin feature/my-new-feature
-```
-
-Then open a Pull Request on GitHub.
-
-## Testing Guidelines
-
-### Manual Testing
-
-1. **Run on a test Proxmox environment first**
-2. **Test with various LXC configurations:**
-   - Fresh Tailscale installation
-   - Already-fixed LXCs (should skip)
-   - Disabled Tailscale services
-   - Unauthenticated Tailscale instances
-3. **Verify reboots:**
-   - Reboot fixed LXCs
-   - Confirm IP binding persists
-
-### What to Test
-
-- ✅ Script handles missing dependencies gracefully
-- ✅ Colorized output works in different terminals
-- ✅ Log file is created and written correctly
-- ✅ Skip list works as expected
-- ✅ Fix persists after reboot
-- ✅ Script doesn't break existing Tailscale configs
-
-## Documentation
-
-If your PR adds features, update:
-
-- `README.md` - Main documentation
-- `CHANGELOG.md` - Add entry under `[Unreleased]`
-- Inline comments in scripts
-- Add examples if applicable
-
-## Community
-
-- Be respectful and inclusive
-- Assume good intentions
-- Focus on what's best for the project
-- Help others learn and grow
-
-## Questions?
-
-Don't hesitate to ask! Open an issue with the `question` label, or start a discussion.
+**Guidelines:**
+- Present tense ("Add" not "Added")
+- Imperative mood ("Fix" not "Fixes")
+- First line ≤ 72 chars
+- Reference issues
 
 ---
 
-**Thank you for contributing to the Proxmox community!** 🎉
+## 📚 Documentation
+
+If adding features, update:
+- `README.md` - Main docs
+- `CHANGELOG.md` - Add under `[Unreleased]`
+- Inline script comments
+- Add examples
+
+---
+
+## ✅ Pull Request Checklist
+
+Before submitting:
+
+- [ ] Tested on Proxmox
+- [ ] Code follows style guide
+- [ ] Docs updated
+- [ ] Commit messages clear
+- [ ] No sensitive data in files
+
+---
+
+## 🤝 Community Guidelines
+
+- Be respectful
+- Assume good intentions
+- Help others learn
+- Focus on solutions
+
+---
+
+## ❓ Questions?
+
+Not sure about something? Just ask! Open an issue with the `question` label.
+
+---
+
+**Thanks for contributing!** Your help makes this better for everyone. 🙏
